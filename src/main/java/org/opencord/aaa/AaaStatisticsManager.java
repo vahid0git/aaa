@@ -25,16 +25,12 @@ public class AaaStatisticsManager
 	private AuthenticationStatisticsDelegate statsDelegate;
 
 	private final Logger log = getLogger(getClass());
-	LinkedList<Long> packetRoundTripTimeList = new LinkedList<Long>();
-	static Map<Byte, Long> outgoingPacketMap = new HashMap<Byte, Long>();
-	AaaStatistics aaaStatisticsInstance;// = AaaStaistics.getInstance();
 
 	@Activate
 	public void activate() {
 		statsDelegate = new InternalAuthenticationDelegateForStatistics();
 		eventDispatcher.addSink(AuthenticationStatisticsEvent.class, listenerRegistry);
 		AuthenticationStatisticsEventPublisher.setDelegate(statsDelegate);
-		aaaStatisticsInstance = AaaStatistics.getInstance();
 	}
 
 	@Deactivate
@@ -42,77 +38,6 @@ public class AaaStatisticsManager
 		eventDispatcher.removeSink(AuthenticationStatisticsEvent.class);
 	}
 
-	public void increaseAcceptPacketsCounter() {
-		aaaStatisticsInstance.acceptPacketsCounter.incrementAndGet();
-	}
-
-	public void increaseRejectPacketsCounter() {
-		aaaStatisticsInstance.rejectPacketsCounter.incrementAndGet();
-	}
-
-	public void increaseChallengePacketsCounter() {
-		aaaStatisticsInstance.challenegePacketsCounter.incrementAndGet();
-	}
-
-	public void increaseAccessRequestPacketsCounter() {
-		aaaStatisticsInstance.accessPacketsCounter.incrementAndGet();
-	}
-
-	public void increaseOrDecreasePendingCounter(boolean isIncrement) {
-		if (isIncrement) {
-			aaaStatisticsInstance.pendingRequestCounter.incrementAndGet();
-		} else {
-			aaaStatisticsInstance.pendingRequestCounter.decrementAndGet();
-		}
-	}
-
-	public void increaseUnknownPacketsCounter() {
-		aaaStatisticsInstance.unknownPacketCounter.incrementAndGet();
-	}
-
-	public void increaseMalformedPacketCounter() {
-		aaaStatisticsInstance.malformedPacketCounter.incrementAndGet();
-	}
-
-	public void increaseInvalidValidatorCounter() {
-		aaaStatisticsInstance.invalidValidatorCounter.incrementAndGet();
-	}
-
-	public void incrementNumberOfPacketFromUnknownServer() {
-		aaaStatisticsInstance.numberOfPacketFromUnknownServer.incrementAndGet();
-	}
-
-	public void countNumberOfDroppedPackets() {
-		AtomicLong numberOfDroppedPackets = new AtomicLong();
-		numberOfDroppedPackets = aaaStatisticsInstance.invalidValidatorCounter;
-		numberOfDroppedPackets.addAndGet(aaaStatisticsInstance.unknownPacketCounter.get());
-		numberOfDroppedPackets.addAndGet(aaaStatisticsInstance.malformedPacketCounter.get());
-		aaaStatisticsInstance.numberOfDroppedPackets = numberOfDroppedPackets;
-	}
-
-	public void handleRoundtripTime(long inTimeInMilis, byte inPacketIdentifier) {
-		if (outgoingPacketMap.containsKey(inPacketIdentifier)) {
-			if(packetRoundTripTimeList.size() > AaaConfig.getPacketsNumberToCountAvgRoundtripTime()) {
-				packetRoundTripTimeList.removeFirst();
-			}
-			packetRoundTripTimeList.add(inTimeInMilis - outgoingPacketMap.get(inPacketIdentifier));	
-		}
-		calculatePacketRoundtripTime();
-	}
-
-	public void calculatePacketRoundtripTime() {
-		long sum = 0;
-		long avg = 0;
-		Iterator<Long> itr = packetRoundTripTimeList.iterator();
-		
-		while(itr.hasNext()) {
-			sum = sum + itr.next();
-		}
-		avg = sum / packetRoundTripTimeList.size();
-		aaaStatisticsInstance.packetRoundtripTimeInMilis = new AtomicLong(avg);
-		log.info("aaaStatisticsInstance.packetRoundtripTimeInMilis::"
-				+ aaaStatisticsInstance.packetRoundtripTimeInMilis);
-	}
 
 	/**
 	 * Delegate allowing the StateMachine to notify us of events.

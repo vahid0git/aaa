@@ -1,5 +1,9 @@
 package org.opencord.aaa;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class AaaStatistics {
@@ -10,23 +14,27 @@ public class AaaStatistics {
 	
 	private static AaaStatistics aaaStatisticsInstance;
 	
-	public static AaaStatistics getInstance() {
-		if(aaaStatisticsInstance == null) 
+	public static synchronized AaaStatistics getInstance() {
+		if(aaaStatisticsInstance == null) { 
 			aaaStatisticsInstance = new AaaStatistics();
+		}
 		return aaaStatisticsInstance;
 	}
 	
-	AtomicLong acceptPacketsCounter = new AtomicLong(); 
-	AtomicLong rejectPacketsCounter = new AtomicLong(); 
-	AtomicLong challenegePacketsCounter = new AtomicLong(); 
-	AtomicLong accessPacketsCounter = new AtomicLong(); 
-	AtomicLong pendingRequestCounter = new AtomicLong();
-	AtomicLong unknownPacketCounter = new AtomicLong();
-	AtomicLong invalidValidatorCounter = new AtomicLong();
-	AtomicLong numberOfDroppedPackets = new AtomicLong();
-	AtomicLong malformedPacketCounter = new AtomicLong();
-	AtomicLong numberOfPacketFromUnknownServer = new AtomicLong();
-	AtomicLong packetRoundtripTimeInMilis = new AtomicLong();
+	LinkedList<Long> packetRoundTripTimeList = new LinkedList<Long>();
+	static Map<Byte, Long> outgoingPacketMap = new HashMap<Byte, Long>();
+	
+	private AtomicLong acceptPacketsCounter = new AtomicLong(); 
+	private AtomicLong rejectPacketsCounter = new AtomicLong(); 
+	private AtomicLong challenegePacketsCounter = new AtomicLong(); 
+	private AtomicLong accessPacketsCounter = new AtomicLong(); 
+	private AtomicLong pendingRequestCounter = new AtomicLong();
+	private AtomicLong unknownPacketCounter = new AtomicLong();
+	private AtomicLong invalidValidatorCounter = new AtomicLong();
+	private AtomicLong numberOfDroppedPackets = new AtomicLong();
+	private AtomicLong malformedPacketCounter = new AtomicLong();
+	private AtomicLong numberOfPacketFromUnknownServer = new AtomicLong();
+	private AtomicLong packetRoundtripTimeInMilis = new AtomicLong();
 	
 	public long getNumberOfPacketFromUnknownServer() {
 		return numberOfPacketFromUnknownServer.get();
@@ -60,5 +68,73 @@ public class AaaStatistics {
 	}
 	public long getUnknowPacketCounter() {
 		return unknownPacketCounter.get();
+	}
+	public void increaseAcceptPacketsCounter() {
+		acceptPacketsCounter.incrementAndGet();
+	}
+
+	public void increaseRejectPacketsCounter() {
+		rejectPacketsCounter.incrementAndGet();
+	}
+
+	public void increaseChallengePacketsCounter() {
+		challenegePacketsCounter.incrementAndGet();
+	}
+
+	public void increaseAccessRequestPacketsCounter() {
+		accessPacketsCounter.incrementAndGet();
+	}
+
+	public void increaseOrDecreasePendingCounter(boolean isIncrement) {
+		if (isIncrement) {
+			pendingRequestCounter.incrementAndGet();
+		} else {
+			pendingRequestCounter.decrementAndGet();
+		}
+	}
+
+	public void increaseUnknownPacketsCounter() {
+		unknownPacketCounter.incrementAndGet();
+	}
+
+	public void increaseMalformedPacketCounter() {
+		malformedPacketCounter.incrementAndGet();
+	}
+
+	public void increaseInvalidValidatorCounter() {
+		invalidValidatorCounter.incrementAndGet();
+	}
+
+	public void incrementNumberOfPacketFromUnknownServer() {
+		numberOfPacketFromUnknownServer.incrementAndGet();
+	}
+
+	public void countNumberOfDroppedPackets() {
+		AtomicLong numberOfDroppedPackets = new AtomicLong();
+		numberOfDroppedPackets = invalidValidatorCounter;
+		numberOfDroppedPackets.addAndGet(unknownPacketCounter.get());
+		numberOfDroppedPackets.addAndGet(malformedPacketCounter.get());
+		this.numberOfDroppedPackets = numberOfDroppedPackets;
+	}
+
+	public void handleRoundtripTime(long inTimeInMilis, byte inPacketIdentifier) {
+		if (outgoingPacketMap.containsKey(inPacketIdentifier)) {
+			if(packetRoundTripTimeList.size() > AaaConfig.getPacketsNumberToCountAvgRoundtripTime()) {
+				packetRoundTripTimeList.removeFirst();
+			}
+			packetRoundTripTimeList.add(inTimeInMilis - outgoingPacketMap.get(inPacketIdentifier));	
+		}
+	}
+
+	public void calculatePacketRoundtripTime() {
+		long sum = 0;
+		long avg = 0;
+		Iterator<Long> itr = packetRoundTripTimeList.iterator();
+		
+		while(itr.hasNext()) {
+			sum = sum + itr.next();
+		}
+		avg = sum / packetRoundTripTimeList.size();
+		packetRoundtripTimeInMilis = new AtomicLong(avg);
 	}
 }

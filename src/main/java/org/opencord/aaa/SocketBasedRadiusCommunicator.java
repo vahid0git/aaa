@@ -69,16 +69,13 @@ public class SocketBasedRadiusCommunicator implements RadiusCommunicator {
     // Executor for RADIUS communication thread
     private ExecutorService executor;
 
-    AuthenticationStatisticsService aaaStatisticsManager;
-    
     AaaManager aaaManager;
 
     SocketBasedRadiusCommunicator(ApplicationId appId, PacketService pktService,
-                                  AaaManager aaaManager, AuthenticationStatisticsService aaaStatisticsManager) {
+                                  AaaManager aaaManager) {
         this.appId = appId;
         this.packetService = pktService;
         this.aaaManager = aaaManager;
-        this.aaaStatisticsManager = aaaStatisticsManager;
     }
 
     @Override
@@ -149,7 +146,7 @@ public class SocketBasedRadiusCommunicator implements RadiusCommunicator {
                     log.trace("Sending packet {} to Radius Server {}:{} using socket",
                               radiusPacket, address, radiusServerPort);
                 }
-                AaaStatisticsManager.outgoingPacketMap.put(radiusPacket.getIdentifier(), System.currentTimeMillis());
+                AaaStatistics.outgoingPacketMap.put(radiusPacket.getIdentifier(), System.currentTimeMillis());
                 socket.send(packet);
             } catch (UnknownHostException uhe) {
                 log.warn("Unable to resolve host {}", radiusHost);
@@ -194,11 +191,11 @@ public class SocketBasedRadiusCommunicator implements RadiusCommunicator {
                                         .deserialize(inboundBasePacket.getData(),
                                                 0,
                                                 inboundBasePacket.getLength());
-                        aaaStatisticsManager.handleRoundtripTime(System.currentTimeMillis(), inboundRadiusPacket.getIdentifier());
+                        AaaStatistics.getInstance().handleRoundtripTime(System.currentTimeMillis(), inboundRadiusPacket.getIdentifier());
                         aaaManager.handleRadiusPacket(inboundRadiusPacket);
                     } catch (DeserializationException dex) {
                     	//increment malformed counter here
-                    	aaaStatisticsManager.increaseMalformedPacketCounter();
+                    	AaaStatistics.getInstance().increaseMalformedPacketCounter();
                         log.error("Cannot deserialize packet", dex);
                     } catch (StateMachineException sme) {
                         log.error("Illegal state machine operation", sme);

@@ -40,6 +40,19 @@ public class AuthenticationStatisticsEventPublisher implements Runnable  {
 
 	public void run() {
 		AaaStatistics instance = AaaStatistics.getInstance();
+		instance.calculatePacketRoundtripTime();
+		log.info("Notifying AuthenticationStatisticsEvent");
+		log.debug("posting AcceptPacketsCounter:::"+instance.getAcceptPacketsCounter());
+		log.debug("posting AccessPacketsCounter:::"+instance.getAccessPacketsCounter());
+		log.debug("posting ChallenegePacketsCounter:::"+instance.getChallenegePacketsCounter());
+		log.debug("posting InvalidValidatorCounter:::"+instance.getInvalidValidatorCounter());
+		log.debug("posting MalformedPacketCounter:::"+instance.getMalformedPacketCounter());
+		log.debug("posting NumberOfDroppedPackets:::"+instance.getNumberOfDroppedPackets());
+		log.debug("posting NumberOfPacketFromUnknownServer:::"+instance.getNumberOfPacketFromUnknownServer());
+		log.debug("posting PacketRoundtripTimeInMilis:::"+instance.getPacketRoundtripTimeInMilis());
+		log.debug("posting PendingRequestCounter:::"+instance.getPendingRequestCounter());
+		log.debug("posting RejectPacketsCounter:::"+instance.getRejectPacketsCounter());
+		log.debug("posting UnknowPacketCounter:::"+instance.getUnknowPacketCounter());
 	    delegate.notify(new AuthenticationStatisticsEvent(
 	    			AuthenticationStatisticsEvent.Type.STATS_UPDATE, instance));
 			   

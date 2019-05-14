@@ -115,12 +115,10 @@ public class PortBasedRadiusCommunicator implements RadiusCommunicator {
     InnerMastershipListener changeListener = new InnerMastershipListener();
     InnerDeviceListener deviceListener = new InnerDeviceListener();
 
-    AuthenticationStatisticsService aaaStatisticsManager;
-    
     PortBasedRadiusCommunicator(ApplicationId appId, PacketService pktService,
                                 MastershipService masService, DeviceService devService,
                                 SubscriberAndDeviceInformationService subsService,
-                                PacketCustomizer pktCustomizer, AaaManager aaaManager, AuthenticationStatisticsService aaaStatisticsManager) {
+                                PacketCustomizer pktCustomizer, AaaManager aaaManager) {
         this.appId = appId;
         this.packetService = pktService;
         this.mastershipService = masService;
@@ -128,8 +126,6 @@ public class PortBasedRadiusCommunicator implements RadiusCommunicator {
         this.subsService = subsService;
         this.pktCustomizer = pktCustomizer;
         this.aaaManager = aaaManager;
-        this.aaaStatisticsManager = aaaStatisticsManager;
-
         ipToSnMap = Maps.newConcurrentMap();
         mastershipService.addListener(changeListener);
         deviceService.addListener(deviceListener);
@@ -285,7 +281,7 @@ public class PortBasedRadiusCommunicator implements RadiusCommunicator {
                     .setOutput(radiusServerConnectPoint.port()).build();
             OutboundPacket o = new DefaultOutboundPacket(
                     radiusServerConnectPoint.deviceId(), t, ByteBuffer.wrap(packet.serialize()));
-            AaaStatisticsManager.outgoingPacketMap.put(outPacketIdentifier, System.currentTimeMillis());
+            AaaStatistics.outgoingPacketMap.put(outPacketIdentifier, System.currentTimeMillis());
             packetService.emit(o);
         } else {
             log.error("Unable to send RADIUS packet, connectPoint is null");
@@ -394,7 +390,7 @@ public class PortBasedRadiusCommunicator implements RadiusCommunicator {
                                             8,
                                             udpPacket.getLength() - 8);
                     try {
-                    	aaaStatisticsManager.handleRoundtripTime(System.currentTimeMillis(), radiusMsg.getIdentifier());
+                    	AaaStatistics.getInstance().handleRoundtripTime(System.currentTimeMillis(), radiusMsg.getIdentifier());
                         aaaManager.handleRadiusPacket(radiusMsg);
                     }  catch (StateMachineException sme) {
                         log.error("Illegal state machine operation", sme);

@@ -101,9 +101,10 @@ public class AaaManager
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected MastershipService mastershipService;
 
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected AuthenticationStatisticsService aaaStatisticsManager;
+//    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+//    protected AuthenticationStatisticsService aaaStatisticsManager;
     
+    protected AaaStatistics aaaStatistics = AaaStatistics.getInstance();
     private final DeviceListener deviceListener = new InternalDeviceListener();
 
     // NAS IP address
@@ -243,10 +244,10 @@ public class AaaManager
 
     private void configureRadiusCommunication() {
         if (radiusConnectionType.toLowerCase().equals("socket")) {
-            impl = new SocketBasedRadiusCommunicator(appId, packetService, this, aaaStatisticsManager);
+            impl = new SocketBasedRadiusCommunicator(appId, packetService, this);
         } else {
             impl = new PortBasedRadiusCommunicator(appId, packetService, mastershipService,
-                    deviceService, subsService, pktCustomizer, this, aaaStatisticsManager);
+                    deviceService, subsService, pktCustomizer, this);
         }
     }
 
@@ -274,7 +275,7 @@ public class AaaManager
     
     public void checkForPacketFromUnknownServer(String hostAddress) {
 		if(!hostAddress.equals(newCfg.radiusIp().getHostAddress())) {
-			aaaStatisticsManager.incrementNumberOfPacketFromUnknownServer();
+			aaaStatistics.incrementNumberOfPacketFromUnknownServer();
 		}
 	}
 
@@ -286,8 +287,8 @@ public class AaaManager
      */
     protected void sendRadiusPacket(RADIUS radiusPacket, InboundPacket inPkt) {
     	outPacketList.add(radiusPacket.getIdentifier());
-    	aaaStatisticsManager.increaseOrDecreasePendingCounter(true);
-    	aaaStatisticsManager.increaseAccessRequestPacketsCounter();
+    	aaaStatistics.increaseOrDecreasePendingCounter(true);
+    	aaaStatistics.increaseAccessRequestPacketsCounter();
     	impl.sendRadiusPacket(radiusPacket, inPkt);
     }
 
@@ -315,11 +316,11 @@ public class AaaManager
         boolean isValid = isValidValidator(radiusPacket);
         if(!isValid) { 
 			log.info("Calling aaaStatisticsManager.increaseInvalidValidatorCounter() from AaaManager.checkForInvalidValidator()");
-			aaaStatisticsManager.increaseInvalidValidatorCounter();
+			aaaStatistics.increaseInvalidValidatorCounter();
 		}
         if(outPacketList.contains(radiusPacket.getIdentifier())) {
         	log.info("Calling aaaStatisticsManager.increaseOrDecreasePendingCounter() from AaaManager.handleRadiusPacket()");
-        	aaaStatisticsManager.increaseOrDecreasePendingCounter(false);
+        	aaaStatistics.increaseOrDecreasePendingCounter(false);
         	outPacketList.remove(new Byte(radiusPacket.getIdentifier()));
         }
         
@@ -340,7 +341,7 @@ public class AaaManager
                         eapPayload, stateMachine.priorityCode());
                 log.info("Send EAP challenge response to supplicant {}", stateMachine.supplicantAddress().toString());
                 sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
-                aaaStatisticsManager.increaseChallengePacketsCounter();
+                aaaStatistics.increaseChallengePacketsCounter();
                 break;
             case RADIUS.RADIUS_CODE_ACCESS_ACCEPT:
                 log.info("RADIUS packet: RADIUS_CODE_ACCESS_ACCEPT");
@@ -356,7 +357,7 @@ public class AaaManager
                 log.info("Send EAP success message to supplicant {}", stateMachine.supplicantAddress().toString());
                 sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
                 stateMachine.authorizeAccess();
-                aaaStatisticsManager.increaseAcceptPacketsCounter();
+                aaaStatistics.increaseAcceptPacketsCounter();
                 break;
             case RADIUS.RADIUS_CODE_ACCESS_REJECT:
                 log.info("RADIUS packet: RADIUS_CODE_ACCESS_REJECT");
@@ -380,13 +381,13 @@ public class AaaManager
                 log.warn("Send EAP failure message to supplicant {}", stateMachine.supplicantAddress().toString());
                 sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
                 stateMachine.denyAccess();
-                aaaStatisticsManager.increaseRejectPacketsCounter();
+                aaaStatistics.increaseRejectPacketsCounter();
                 break;
             default:
                 log.warn("Unknown RADIUS message received with code: {}", radiusPacket.getCode());
-                aaaStatisticsManager.increaseUnknownPacketsCounter();
+                aaaStatistics.increaseUnknownPacketsCounter();
         }
-        aaaStatisticsManager.countNumberOfDroppedPackets();
+        aaaStatistics.countNumberOfDroppedPackets();
     }
 
     /**
