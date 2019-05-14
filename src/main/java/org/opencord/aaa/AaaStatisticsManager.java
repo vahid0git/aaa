@@ -28,6 +28,7 @@ public class AaaStatisticsManager
 
 	@Activate
 	public void activate() {
+		log.info("inside activate aaaStatsMgr");
 		statsDelegate = new InternalAuthenticationDelegateForStatistics();
 		eventDispatcher.addSink(AuthenticationStatisticsEvent.class, listenerRegistry);
 		AuthenticationStatisticsEventPublisher.setDelegate(statsDelegate);

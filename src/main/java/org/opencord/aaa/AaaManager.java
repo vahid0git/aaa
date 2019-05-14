@@ -101,8 +101,8 @@ public class AaaManager
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected MastershipService mastershipService;
 
-//    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-//    protected AuthenticationStatisticsService aaaStatisticsManager;
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected AuthenticationStatisticsService aaaStatisticsManager;
     
     protected AaaStatistics aaaStatistics = AaaStatistics.getInstance();
     private final DeviceListener deviceListener = new InternalDeviceListener();

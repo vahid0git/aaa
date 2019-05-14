@@ -40,8 +40,8 @@ public class AuthenticationStatisticsEventPublisher implements Runnable  {
 
 	public void run() {
 		AaaStatistics instance = AaaStatistics.getInstance();
-		instance.calculatePacketRoundtripTime();
 		log.info("Notifying AuthenticationStatisticsEvent");
+//		instance.calculatePacketRoundtripTime();
 		log.debug("posting AcceptPacketsCounter:::"+instance.getAcceptPacketsCounter());
 		log.debug("posting AccessPacketsCounter:::"+instance.getAccessPacketsCounter());
 		log.debug("posting ChallenegePacketsCounter:::"+instance.getChallenegePacketsCounter());

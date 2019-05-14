@@ -14,7 +14,7 @@ public class AaaStatistics {
 	
 	private static AaaStatistics aaaStatisticsInstance;
 	
-	public static synchronized AaaStatistics getInstance() {
+	public static AaaStatistics getInstance() {
 		if(aaaStatisticsInstance == null) { 
 			aaaStatisticsInstance = new AaaStatistics();
 		}
