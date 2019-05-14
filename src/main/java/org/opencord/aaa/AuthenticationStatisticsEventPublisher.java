@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 
 public class AuthenticationStatisticsEventPublisher implements Runnable  {
 	
-	// for verbose output
     private final Logger log = getLogger(getClass());
 	
 	public static AuthenticationStatisticsEventPublisher instance;
@@ -41,19 +40,7 @@ public class AuthenticationStatisticsEventPublisher implements Runnable  {
 
 	public void run() {
 		AaaStatistics instance = AaaStatistics.getInstance();
-		log.info("Inside AuthenticationPublisher---Calling notify----stats getting published now------");
-		log.info("Event value published---Accept_packets_counter::::"+instance.getAccept_packets_counter());
-		log.info("Event value published---Reject_packets_counter::::"+instance.getReject_packets_counter());
-		log.info("Event value published---Challenge_packets_counter::::"+instance.getChallenege_packets_counter());
-		log.info("Event value published---ACCESS_PACKET_COUNTER::::"+instance.getAccess_packets_counter());
-		log.info("Event value published---INVALID_VALIDATOR_COUNTER::::"+instance.getInvalid_validator_counter());
-		log.info("Event value published---UNKNOWN_TYPE_COUNTER::::"+instance.getUnknown_packet_counter());
-		log.info("Event value published---PENDING_REQUEST_COUNTER::::"+instance.getPending_request_counter());
-		log.info("Event value published---NUMBER_OF_DROPPED_PACKETS::::"+instance.getNumberOfDroppedPackets());
-		log.info("Event value published---MALFORMED_PACKET_COUNTERS::::"+instance.getMalformed_packet_counter());
-		log.info("Event value published---NUMBER_OF_PACKET_FROM_UNKNOWN_SERVER::::"+instance.getNumberOfPacketFromUnknownServer());
-		log.info("Event value published---PACKET_ROUND_TRIP_TIME_IN_MILLS::::"+instance.getPacketRoundtripTimeInMilis());
-			   delegate.notify(new AuthenticationStatisticsEvent(
+	    delegate.notify(new AuthenticationStatisticsEvent(
 	    			AuthenticationStatisticsEvent.Type.STATS_UPDATE, instance));
 			   
 		}

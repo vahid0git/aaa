@@ -29,7 +29,6 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
-import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.felix.scr.annotations.Service;
 import org.onlab.packet.DeserializationException;
 import org.onlab.packet.EAP;
@@ -64,8 +63,6 @@ import org.onosproject.net.packet.PacketService;
 import org.opencord.sadis.SubscriberAndDeviceInformationService;
 import org.osgi.service.component.annotations.Activate;
 import org.slf4j.Logger;
-
-//Added import for Publisher
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -103,13 +100,6 @@ public class AaaManager
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected MastershipService mastershipService;
-    
-	/*
-	 * @Reference(cardinality = ReferenceCardinality.OPTIONAL_UNARY, bind =
-	 * "bindAaaStatisticsManager", unbind = "unbindAaaStatisticsManager", policy =
-	 * ReferencePolicy.DYNAMIC) protected AuthenticationStatisticsService
-	 * aaaStatisticsManager;// = AaaStatisticsManager.getInstance();
-	 */
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected AuthenticationStatisticsService aaaStatisticsManager;
@@ -156,13 +146,10 @@ public class AaaManager
 
     // latest configuration
     AaaConfig newCfg;
-    
 
-    //Adding instance of publisher
-    AuthenticationStatisticsEventPublisher authenticationStatisticsPublisher;// = new AuthenticationStatisticsEventPublisher();
+    AuthenticationStatisticsEventPublisher authenticationStatisticsPublisher;
     ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
 	   ScheduledFuture<?> scheduledFuture;
-
 
     // Configuration properties factory
     private final ConfigFactory factory =
@@ -226,32 +213,17 @@ public class AaaManager
         customInfo = new CustomizationInfo(subsService, deviceService);
         cfgListener.reconfigureNetwork(netCfgService.getConfig(appId, AaaConfig.class));
         log.info("Starting with config {} {}", this, newCfg);
-
         configureRadiusCommunication();
-		/*
-		 * AaaConfig incfg = netCfgService.getConfig(appId, AaaConfig.class);
-		 * incfg.radiusIp();
-		 */
-        // register our event handler
         packetService.addProcessor(processor, PacketProcessor.director(2));
-
-
         StateMachine.initializeMaps();
         StateMachine.setDelegate(delegate);
-
         impl.initializeLocalState(newCfg);
-
         impl.requestIntercepts();
-
         deviceService.addListener(deviceListener);
-        //aaaStatisticsManager = new AaaStatisticsManager();
-        //aaaStatisticsManager.activate(this.eventDispatcher);
-      //scheduling publisher 
-       authenticationStatisticsPublisher = AuthenticationStatisticsEventPublisher.getInstance();
-       scheduledFuture = ses.scheduleAtFixedRate(authenticationStatisticsPublisher, AaaConfig.getInitialDelay(), AaaConfig.getRepeatDelay(), TimeUnit.SECONDS);
+        authenticationStatisticsPublisher = AuthenticationStatisticsEventPublisher.getInstance();
+        scheduledFuture = ses.scheduleAtFixedRate(authenticationStatisticsPublisher, AaaConfig.getInitialDelay(), AaaConfig.getRepeatDelay(), TimeUnit.SECONDS);
         log.info("Started");
     }
-
 
     @Deactivate
     public void deactivate() {
@@ -264,10 +236,8 @@ public class AaaManager
         impl.deactivate();
         deviceService.removeListener(deviceListener);
         eventDispatcher.removeSink(AuthenticationEvent.class);
-        //canceling schedule of publisher
         scheduledFuture.cancel(true);
         ses.shutdown();
-//        aaaStatisticsManager.deactivate();
         log.info("Stopped");
     }
 
@@ -297,20 +267,13 @@ public class AaaManager
         }
     }
     
-    private boolean isValidValidator(RADIUS radiusPacket) {//TODO: change method name, return boolean. increment/decrement outside this method
-//    	radiusPacket.addMessageAuthenticator(AaaManager.this.radiusSecret);
+    private boolean isValidValidator(RADIUS radiusPacket) {
     	log.info("radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_MESSAGE_AUTH)---"+radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_MESSAGE_AUTH).getValue());
-//		boolean isValid = radiusPacket.checkMessageAuthenticator(AaaManager.this.radiusSecret);
-		/*if(!isValid) {//TODO handle outside. Decide? if false then to proceed further or throw error? 
-			log.info("Calling aaaStatisticsManager.increaseInvalidValidatorCounter() from AaaManager.checkForInvalidValidator()");
-			aaaStatisticsManager.increaseInvalidValidatorCounter();
-		}*/
 		return radiusPacket.checkMessageAuthenticator(AaaManager.this.radiusSecret);
 	}
     
     public void checkForPacketFromUnknownServer(String hostAddress) {
 		if(!hostAddress.equals(newCfg.radiusIp().getHostAddress())) {
-			log.info("Calling aaaStatisticsManager.incrementNumberOfPacketFromUnknownServer() from AaaManager.checkForPacketFromUnknownServer()");
 			aaaStatisticsManager.incrementNumberOfPacketFromUnknownServer();
 		}
 	}
@@ -322,14 +285,9 @@ public class AaaManager
      * @param inPkt        Incoming EAPOL packet
      */
     protected void sendRadiusPacket(RADIUS radiusPacket, InboundPacket inPkt) {
-    	//if(radiusPacket.getCode() == RADIUS.RADIUS_CODE_ACCESS_REQUEST)//TODO- confirm this check. is it possible to send challenge response to radius
-    	//adding identifier of sent packet to the list
-    	outPacketList.add(radiusPacket.getIdentifier());//TODO : rename to outPacketList
-//    	since state is pending and cant be changed unless a req execution completes
-    	log.info("Calling aaaStatisticsManager.increaseOrDecreasePendingCounter() from AaaManager.sendRadiusPacket()");
+    	outPacketList.add(radiusPacket.getIdentifier());
     	aaaStatisticsManager.increaseOrDecreasePendingCounter(true);
-    	log.info("Calling aaaStatisticsManager.increaseAccessRequestPacketsCounter() from AaaManager.sendRadiusPacket()");
-    	aaaStatisticsManager.increaseAccessRequestPacketsCounter();//this will increase only if context.pktType is EAPOL
+    	aaaStatisticsManager.increaseAccessRequestPacketsCounter();
     	impl.sendRadiusPacket(radiusPacket, inPkt);
     }
 
@@ -354,24 +312,18 @@ public class AaaManager
 
         EAP eapPayload;
         Ethernet eth;
-        // 8.	Number of malformed access response packets received from the server
-//        aaaStatsManager.checkForMalformedPacket(radiusPacket);
-        // 9: Number of access response packets received from the server with an invalid validator
-        boolean isValid = isValidValidator(radiusPacket);//TODO CHECK LOGIC IN THIS CLASS
-        if(!isValid) {//TODO handle outside. Decide? if false then to proceed further or throw error? 
+        boolean isValid = isValidValidator(radiusPacket);
+        if(!isValid) { 
 			log.info("Calling aaaStatisticsManager.increaseInvalidValidatorCounter() from AaaManager.checkForInvalidValidator()");
 			aaaStatisticsManager.increaseInvalidValidatorCounter();
 		}
-        //checking if identifier is found in list then decrementing the pending req counter 
         if(outPacketList.contains(radiusPacket.getIdentifier())) {
         	log.info("Calling aaaStatisticsManager.increaseOrDecreasePendingCounter() from AaaManager.handleRadiusPacket()");
         	aaaStatisticsManager.increaseOrDecreasePendingCounter(false);
-        	//removing identifier from list
         	outPacketList.remove(new Byte(radiusPacket.getIdentifier()));
         }
         
         switch (radiusPacket.getCode()) {
-        //TODO identifier of inpacket are not compared with identifier of outpackets in code. Logics not changed as part of metrics implementation ?
             case RADIUS.RADIUS_CODE_ACCESS_CHALLENGE:
                 log.info("RADIUS packet: RADIUS_CODE_ACCESS_CHALLENGE");
                 RADIUSAttribute radiusAttrState = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_STATE);
@@ -388,12 +340,10 @@ public class AaaManager
                         eapPayload, stateMachine.priorityCode());
                 log.info("Send EAP challenge response to supplicant {}", stateMachine.supplicantAddress().toString());
                 sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
-                log.info("Calling aaaStatisticsManager.increaseChallengePacketsCounter() from AaaManager.handleRadiusPacket()");
                 aaaStatisticsManager.increaseChallengePacketsCounter();
                 break;
             case RADIUS.RADIUS_CODE_ACCESS_ACCEPT:
                 log.info("RADIUS packet: RADIUS_CODE_ACCESS_ACCEPT");
-                //send an EAPOL - Success to the supplicant.
                 byte[] eapMessageSuccess =
                         radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE).getValue();
                 eapPayload = EAP.deserializer().deserialize(
@@ -405,14 +355,11 @@ public class AaaManager
                         eapPayload, stateMachine.priorityCode());
                 log.info("Send EAP success message to supplicant {}", stateMachine.supplicantAddress().toString());
                 sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
-
                 stateMachine.authorizeAccess();
-                log.info("Calling aaaStatisticsManager.increaseAcceptPacketsCounter() from AaaManager.handleRadiusPacket()");
                 aaaStatisticsManager.increaseAcceptPacketsCounter();
                 break;
             case RADIUS.RADIUS_CODE_ACCESS_REJECT:
                 log.info("RADIUS packet: RADIUS_CODE_ACCESS_REJECT");
-                //send an EAPOL - Failure to the supplicant.
                 byte[] eapMessageFailure;
                 eapPayload = new EAP();
                 RADIUSAttribute radiusAttrEap = radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_EAP_MESSAGE);
@@ -433,16 +380,13 @@ public class AaaManager
                 log.warn("Send EAP failure message to supplicant {}", stateMachine.supplicantAddress().toString());
                 sendPacketToSupplicant(eth, stateMachine.supplicantConnectpoint());
                 stateMachine.denyAccess();
-                log.info("Calling aaaStatisticsManager.increaseRejectPacketsCounter() from AaaManager.handleRadiusPacket()");
                 aaaStatisticsManager.increaseRejectPacketsCounter();
                 break;
             default:
                 log.warn("Unknown RADIUS message received with code: {}", radiusPacket.getCode());
-                log.info("Calling aaaStatisticsManager.increaseUnknownPacketsCounter() from AaaManager.handleRadiusPacket()");
                 aaaStatisticsManager.increaseUnknownPacketsCounter();
         }
-        log.info("Calling aaaStatisticsManager.countNumberOfDroppedPackets() from AaaManager.handleRadiusPacket()");
-        aaaStatisticsManager.countNumberOfDroppedPackets();//TODO - call this while publishing it to kafka
+        aaaStatisticsManager.countNumberOfDroppedPackets();
     }
 
     /**
@@ -768,18 +712,4 @@ public class AaaManager
             }
         }
     }
-	/*
-	 * protected void bindAaaStatisticsManager(AaaStatisticsManager
-	 * aaaStatisticsManager) { if (this.aaaStatisticsManager == null) {
-	 * log.info("Binding AuthenticationService"); this.aaaStatisticsManager =
-	 * aaaStatisticsManager; } else {
-	 * log.warn("Trying to bind AuthenticationService but it is already bound"); } }
-	 * 
-	 * protected void unbindAaaStatisticsManager(AaaStatisticsManager
-	 * aaaStatisticsManager) { if (this.aaaStatisticsManager ==
-	 * aaaStatisticsManager) { log.info("Unbinding AuthenticationService");
-	 * this.aaaStatisticsManager = null; } else {
-	 * log.warn("Trying to unbind AuthenticationService but it is already unbound");
-	 * } }
-	 */
 }

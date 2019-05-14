@@ -2,8 +2,8 @@ package org.opencord.aaa;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
 import org.onosproject.event.AbstractListenerManager;
-import org.onosproject.event.EventDeliveryService;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
@@ -25,12 +24,6 @@ public class AaaStatisticsManager
 
 	private AuthenticationStatisticsDelegate statsDelegate;
 
-	/*
-	 * public AaaStatisticsManager() { statsDelegate = new
-	 * InternalAuthenticationDelegateForStatistics();
-	 * AuthenticationStatisticsEventPublisher.setDelegate(statsDelegate); }
-	 */
-
 	private final Logger log = getLogger(getClass());
 	LinkedList<Long> packetRoundTripTimeList = new LinkedList<Long>();
 	static Map<Byte, Long> outgoingPacketMap = new HashMap<Byte, Long>();
@@ -38,186 +31,88 @@ public class AaaStatisticsManager
 
 	@Activate
 	public void activate() {
-		log.info("Inside AaaStatisticsManager.activate()");
 		statsDelegate = new InternalAuthenticationDelegateForStatistics();
 		eventDispatcher.addSink(AuthenticationStatisticsEvent.class, listenerRegistry);
 		AuthenticationStatisticsEventPublisher.setDelegate(statsDelegate);
 		aaaStatisticsInstance = AaaStatistics.getInstance();
-		log.info("Exiting AaaStatisticsManager.activate()----");
 	}
 
 	@Deactivate
 	public void deactivate() {
-		log.info("Inside AaaStatisticsManager.deactivate()");
 		eventDispatcher.removeSink(AuthenticationStatisticsEvent.class);
 	}
 
-	/*
-	 * Moved to AaaStats.java
-	 * 
-	 * protected static final int DEFAULT_COUNTER = 0; protected int
-	 * accept_packets_counter = DEFAULT_COUNTER; protected int
-	 * reject_packets_counter = DEFAULT_COUNTER; protected int
-	 * challenege_packets_counter = DEFAULT_COUNTER; protected int
-	 * access_packets_counter = DEFAULT_COUNTER; protected int
-	 * pending_request_counter = DEFAULT_COUNTER; protected int
-	 * unknown_packet_counter = DEFAULT_COUNTER;
-	 */
-
-	// TODO - decide where to use delegate and call delegate.notify for
-	// statisticsEvent
-
-	/*
-	 * protected void init(AaaManager aaaManager) { this.aaaManager = aaaManager; //
-	 * this.aaaConfig = aaaManager.newCfg; }
-	 */
-
 	public void increaseAcceptPacketsCounter() {
-		log.info("Inside increaseAcceptPacketsCounter()");
-		aaaStatisticsInstance.accept_packets_counter.incrementAndGet();
-		log.info("aaaStatisticsInstance.accept_packets_counter::" + aaaStatisticsInstance.accept_packets_counter);
+		aaaStatisticsInstance.acceptPacketsCounter.incrementAndGet();
 	}
 
 	public void increaseRejectPacketsCounter() {
-		log.info("Inside increaseRejectPacketsCounter()");
-		aaaStatisticsInstance.reject_packets_counter.incrementAndGet();
-		log.info("aaaStatisticsInstance.reject_packets_counter::" + aaaStatisticsInstance.reject_packets_counter);
+		aaaStatisticsInstance.rejectPacketsCounter.incrementAndGet();
 	}
 
 	public void increaseChallengePacketsCounter() {
-		log.info("Inside increaseChallengePacketsCounter()");
-		aaaStatisticsInstance.challenege_packets_counter.incrementAndGet();
-		log.info("aaaStatisticsInstance.challenege_packets_counter::"
-				+ aaaStatisticsInstance.challenege_packets_counter);
+		aaaStatisticsInstance.challenegePacketsCounter.incrementAndGet();
 	}
 
 	public void increaseAccessRequestPacketsCounter() {
-		log.info("Inside increaseAccessRequestPacketsCounter()");
-		aaaStatisticsInstance.access_packets_counter.incrementAndGet();
-		log.info("aaaStatisticsInstance.access_packets_counter::" + aaaStatisticsInstance.access_packets_counter);
+		aaaStatisticsInstance.accessPacketsCounter.incrementAndGet();
 	}
 
 	public void increaseOrDecreasePendingCounter(boolean isIncrement) {
-		log.info("Inside increaseOrDecreasePendingCounter()");
 		if (isIncrement) {
-			log.info("increasing PendingCounter---");
-			aaaStatisticsInstance.pending_request_counter.incrementAndGet();
+			aaaStatisticsInstance.pendingRequestCounter.incrementAndGet();
 		} else {
-			log.info("decreasing PendingCounter---");
-			aaaStatisticsInstance.pending_request_counter.decrementAndGet();
+			aaaStatisticsInstance.pendingRequestCounter.decrementAndGet();
 		}
-		log.info("aaaStatisticsInstance.pending_request_counter::::" + aaaStatisticsInstance.pending_request_counter);
 	}
 
 	public void increaseUnknownPacketsCounter() {
-		log.info("Inside increaseUnknownPacketsCounter()");
-		aaaStatisticsInstance.unknown_packet_counter.incrementAndGet();
-		log.info("aaaStatisticsInstance.unknown_packet_counter::::" + aaaStatisticsInstance.unknown_packet_counter);
+		aaaStatisticsInstance.unknownPacketCounter.incrementAndGet();
 	}
 
 	public void increaseMalformedPacketCounter() {
-		log.info("Inside increaseMalformedPacketCounter()");
-		aaaStatisticsInstance.malformed_packet_counter.incrementAndGet();
-		log.info("aaaStatisticsInstance.malformed_packet_counter:::" + aaaStatisticsInstance.malformed_packet_counter);
+		aaaStatisticsInstance.malformedPacketCounter.incrementAndGet();
 	}
-
-	/*
-	 * public void checkForInvalidValidator(RADIUS radiusPacket) {//TODO: check for
-	 * this logic existence boolean isValid =
-	 * radiusPacket.checkMessageAuthenticator(aaaManager.radiusSecret); if(!isValid)
-	 * { increaseInvalidValidatorCounter(); }
-	 * 
-	 * }
-	 */
 
 	public void increaseInvalidValidatorCounter() {
-		log.info("Inside increaseInvalidValidatorCounter()");
-		aaaStatisticsInstance.invalid_validator_counter.incrementAndGet();
-		log.info(
-				"aaaStatisticsInstance.invalid_validator_counter:::" + aaaStatisticsInstance.invalid_validator_counter);
+		aaaStatisticsInstance.invalidValidatorCounter.incrementAndGet();
 	}
 
-	/*
-	 * public void checkForPacketFromUnknownServer(String hostAddress) {
-	 * if(!hostAddress.equals(aaaManager.newCfg.radiusIp().getHostAddress())) {
-	 * aaaStatisticsInstance.numberOfPacketFromUnknownServer.incrementAndGet(); } }
-	 */
-
 	public void incrementNumberOfPacketFromUnknownServer() {
-		log.info("Inside incrementNumberOfPacketFromUnknownServer()");
 		aaaStatisticsInstance.numberOfPacketFromUnknownServer.incrementAndGet();
-		log.info("aaaStatisticsInstance.numberOfPacketFromUnknownServer::"
-				+ aaaStatisticsInstance.numberOfPacketFromUnknownServer);
 	}
 
 	public void countNumberOfDroppedPackets() {
-		log.info("Inside countNumberOfDroppedPackets()");
 		AtomicLong numberOfDroppedPackets = new AtomicLong();
-		numberOfDroppedPackets = aaaStatisticsInstance.invalid_validator_counter;
-		numberOfDroppedPackets.addAndGet(aaaStatisticsInstance.unknown_packet_counter.get());
-		numberOfDroppedPackets.addAndGet(aaaStatisticsInstance.malformed_packet_counter.get());
-		// TODO : add Number of packets not satisfying any logic into the code
+		numberOfDroppedPackets = aaaStatisticsInstance.invalidValidatorCounter;
+		numberOfDroppedPackets.addAndGet(aaaStatisticsInstance.unknownPacketCounter.get());
+		numberOfDroppedPackets.addAndGet(aaaStatisticsInstance.malformedPacketCounter.get());
 		aaaStatisticsInstance.numberOfDroppedPackets = numberOfDroppedPackets;
-		log.info("numberOfDroppedPackets::" + numberOfDroppedPackets);
 	}
 
 	public void handleRoundtripTime(long inTimeInMilis, byte inPacketIdentifier) {
-		log.info("Inside handleRoundtripTime()");
-		if (outgoingPacketMap.containsKey(inPacketIdentifier)) {// add roundtrip for this packet in list
-			if(packetRoundTripTimeList.size() < AaaConfig.getPacketsNumberToCountAvgRoundtripTime()) {
-			   packetRoundTripTimeList.add(inTimeInMilis - outgoingPacketMap.get(inPacketIdentifier));
-			}else {
+		if (outgoingPacketMap.containsKey(inPacketIdentifier)) {
+			if(packetRoundTripTimeList.size() > AaaConfig.getPacketsNumberToCountAvgRoundtripTime()) {
 				packetRoundTripTimeList.removeFirst();
-				packetRoundTripTimeList.add(inTimeInMilis - outgoingPacketMap.get(inPacketIdentifier));
 			}
-				
-			//TODO: change packetTimeList name to packetroundtripTimeList. Make packetValues configurable
-			//TODO change logic, if list size less than 5 then add, else remove oldest item from list and add.
-		//TODO: use linkedList instead of arrayList, if size()>5 removeFirstItem(); add(inTimeInMilis - outgoingPacketMap.get(inPacketIdentifier));
-		} // ignore if identifier is different
+			packetRoundTripTimeList.add(inTimeInMilis - outgoingPacketMap.get(inPacketIdentifier));	
+		}
 		calculatePacketRoundtripTime();
 	}
 
-	/*
-	 * public void handleRoundtripTimeForSocket(long inTimeInMilis, byte
-	 * inPacketIdentifier) { if(outgoingPacketMap.containsKey(inPacketIdentifier))
-	 * {//add roundtrip for this packet in list
-	 * packetTimeList.add(inTimeInMilis-outgoingPacketMap.get(inPacketIdentifier));
-	 * } calculatePacketRoundtripTime(); }
-	 * 
-	 * public void handleRoundtripTimeForPort(long inTimeInMilis, byte
-	 * inPacketIdentifier) {
-	 * 
-	 * }
-	 */
-
 	public void calculatePacketRoundtripTime() {
-		log.info("Inside calculatePacketRoundtripTime()");
-		// calculate the average round trip time for last 5 packets
 		long sum = 0;
 		long avg = 0;
-		/*
-		 * if (packetRoundTripTimeList.size() <= 5) { for (int i = 0; i <
-		 * packetRoundTripTimeList.size(); i++) { sum = sum +
-		 * packetRoundTripTimeList.get(i); } avg = sum / packetRoundTripTimeList.size();
-		 * aaaStatisticsInstance.packetRoundtripTimeInMilis = new AtomicLong(avg); }
-		 * else { // int dividend=packetTimeList.size()-1; for (int i =
-		 * packetRoundTripTimeList.size() - 1; i >= packetRoundTripTimeList.size() - 5;
-		 * i--) { sum = sum + packetRoundTripTimeList.get(i); // dividend--; } avg = sum
-		 * / 5; aaaStatisticsInstance.packetRoundtripTimeInMilis = new AtomicLong(avg);
-		 * }
-		 */
-		for (int i = 0; i < packetRoundTripTimeList.size(); i++) {
-			sum = sum + packetRoundTripTimeList.get(i);
+		Iterator<Long> itr = packetRoundTripTimeList.iterator();
+		
+		while(itr.hasNext()) {
+			sum = sum + itr.next();
 		}
 		avg = sum / packetRoundTripTimeList.size();
 		aaaStatisticsInstance.packetRoundtripTimeInMilis = new AtomicLong(avg);
 		log.info("aaaStatisticsInstance.packetRoundtripTimeInMilis::"
 				+ aaaStatisticsInstance.packetRoundtripTimeInMilis);
 	}
-	// TODO: publish counters to event. trigger event whenever any var value changes
-	// reset counter on restart(This should be taken care)
-	// TODO : check if onos provides scheduler.
 
 	/**
 	 * Delegate allowing the StateMachine to notify us of events.

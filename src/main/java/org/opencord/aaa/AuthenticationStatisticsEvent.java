@@ -1,20 +1,13 @@
 package org.opencord.aaa;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.onosproject.event.AbstractEvent;
 /**
  * Event indicating the Accounting Data of AAA.
  */
 public class AuthenticationStatisticsEvent extends
 		AbstractEvent<AuthenticationStatisticsEvent.Type, AaaStatistics>{
-//	AaaStatistics mgr = AaaStatistics.getInstance();
-//	AtomicLong count = mgr.accept_packets_counter;
 	/**
      * Accounting data.
-     */
-	//TODO
-	 /**
      * AuthenticationMetrixEvent event type.
      */
     public enum Type {

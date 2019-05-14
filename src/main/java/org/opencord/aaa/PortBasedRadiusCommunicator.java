@@ -115,7 +115,7 @@ public class PortBasedRadiusCommunicator implements RadiusCommunicator {
     InnerMastershipListener changeListener = new InnerMastershipListener();
     InnerDeviceListener deviceListener = new InnerDeviceListener();
 
-    AuthenticationStatisticsService aaaStatisticsManager; //= AaaStatisticsManager.getInstance(); // new AaaStatsManager();
+    AuthenticationStatisticsService aaaStatisticsManager;
     
     PortBasedRadiusCommunicator(ApplicationId appId, PacketService pktService,
                                 MastershipService masService, DeviceService devService,
@@ -394,7 +394,6 @@ public class PortBasedRadiusCommunicator implements RadiusCommunicator {
                                             8,
                                             udpPacket.getLength() - 8);
                     try {
-                    	log.info("Calling aaaStatisticsManager.handleRoundtripTime() from portBasedRadiusCommunicator.handleIPv4PacketFromServer()");
                     	aaaStatisticsManager.handleRoundtripTime(System.currentTimeMillis(), radiusMsg.getIdentifier());
                         aaaManager.handleRadiusPacket(radiusMsg);
                     }  catch (StateMachineException sme) {
