@@ -191,11 +191,11 @@ public class SocketBasedRadiusCommunicator implements RadiusCommunicator {
                                         .deserialize(inboundBasePacket.getData(),
                                                 0,
                                                 inboundBasePacket.getLength());
-                        AaaStatistics.getInstance().handleRoundtripTime(System.currentTimeMillis(), inboundRadiusPacket.getIdentifier());
+                        AaaStatistics.getInstance().handleRoundtripTime(System.currentTimeMillis(),
+                                inboundRadiusPacket.getIdentifier());
                         aaaManager.handleRadiusPacket(inboundRadiusPacket);
                     } catch (DeserializationException dex) {
-                    	//increment malformed counter here
-                    	AaaStatistics.getInstance().increaseMalformedPacketCounter();
+                        AaaStatistics.getInstance().increaseMalformedPacketCounter();
                         log.error("Cannot deserialize packet", dex);
                     } catch (StateMachineException sme) {
                         log.error("Illegal state machine operation", sme);

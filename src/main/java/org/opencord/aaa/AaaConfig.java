@@ -87,30 +87,20 @@ public class AaaConfig extends Config<ApplicationId> {
 
     //Event publisher schedule value initial delay
     private static final int INITIAL_DELAY = 0;
-
-    private static final int PACKETS_NUMBER_TO_COUNT_AVG_ROUNDTRIP_TIME = 5;
-    
-	public static int getPacketsNumberToCountAvgRoundtripTime() {
-		return PACKETS_NUMBER_TO_COUNT_AVG_ROUNDTRIP_TIME;
-	}
-
-	public static int getInitialDelay() {
-		return INITIAL_DELAY;
-	}
-
-	public static int getRepeatDelay() {
-		return REPEAT_DELAY;
-	}
-
-	//Event publisher schedule value repeat delay
     private static final int REPEAT_DELAY = 20;
-
-  
-
-	/**
+    private static final int PACKETS_NUMBER_TO_COUNT_AVG_ROUNDTRIP_TIME = 5;
+    public static int getPacketsNumberToCountAvgRoundtripTime() {
+        return PACKETS_NUMBER_TO_COUNT_AVG_ROUNDTRIP_TIME;
+    }
+    public static int getInitialDelay() {
+        return INITIAL_DELAY;
+    }
+    public static int getRepeatDelay() {
+        return REPEAT_DELAY;
+    }
+    /**
      * Gets the value of a string property, protecting for an empty
      * JSON object.
-     *
      * @param name name of the property
      * @param defaultValue default value if none has been specified
      * @return String value if one os found, default value otherwise
@@ -120,8 +110,7 @@ public class AaaConfig extends Config<ApplicationId> {
             return defaultValue;
         }
         return get(name, defaultValue);
-    }
-
+        }
     /**
      * Returns the NAS ip.
      *

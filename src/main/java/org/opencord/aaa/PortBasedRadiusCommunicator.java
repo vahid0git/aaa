@@ -104,17 +104,12 @@ public class PortBasedRadiusCommunicator implements RadiusCommunicator {
 
     // RADIUS p-bit
     private byte radiusPBit;
-
     PacketCustomizer pktCustomizer;
     AaaManager aaaManager;
-
     byte outPacketIdentifier;
-    
     ConnectPoint radiusServerConnectPoint = null;
-
     InnerMastershipListener changeListener = new InnerMastershipListener();
     InnerDeviceListener deviceListener = new InnerDeviceListener();
-
     PortBasedRadiusCommunicator(ApplicationId appId, PacketService pktService,
                                 MastershipService masService, DeviceService devService,
                                 SubscriberAndDeviceInformationService subsService,
@@ -390,7 +385,8 @@ public class PortBasedRadiusCommunicator implements RadiusCommunicator {
                                             8,
                                             udpPacket.getLength() - 8);
                     try {
-                    	AaaStatistics.getInstance().handleRoundtripTime(System.currentTimeMillis(), radiusMsg.getIdentifier());
+                        AaaStatistics.getInstance().handleRoundtripTime(System.currentTimeMillis(),
+                                radiusMsg.getIdentifier());
                         aaaManager.handleRadiusPacket(radiusMsg);
                     }  catch (StateMachineException sme) {
                         log.error("Illegal state machine operation", sme);

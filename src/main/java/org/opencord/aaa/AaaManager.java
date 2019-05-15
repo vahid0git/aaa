@@ -103,7 +103,6 @@ public class AaaManager
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected AuthenticationStatisticsService aaaStatisticsManager;
-    
     protected AaaStatistics aaaStatistics = AaaStatistics.getInstance();
     private final DeviceListener deviceListener = new InternalDeviceListener();
 
@@ -147,11 +146,9 @@ public class AaaManager
 
     // latest configuration
     AaaConfig newCfg;
-
     AuthenticationStatisticsEventPublisher authenticationStatisticsPublisher;
     ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
-	   ScheduledFuture<?> scheduledFuture;
-
+    ScheduledFuture<?> scheduledFuture;
     // Configuration properties factory
     private final ConfigFactory factory =
             new ConfigFactory<ApplicationId, AaaConfig>(APP_SUBJECT_FACTORY,
@@ -206,7 +203,7 @@ public class AaaManager
 
     @Activate
     public void activate() {
-    	log.info("Inside AaaManager.activate()");
+        log.info("Inside AaaManager.activate()");
         appId = coreService.registerApplication(APP_NAME);
         eventDispatcher.addSink(AuthenticationEvent.class, listenerRegistry);
         netCfgService.addListener(cfgListener);
@@ -222,13 +219,14 @@ public class AaaManager
         impl.requestIntercepts();
         deviceService.addListener(deviceListener);
         authenticationStatisticsPublisher = AuthenticationStatisticsEventPublisher.getInstance();
-        scheduledFuture = ses.scheduleAtFixedRate(authenticationStatisticsPublisher, AaaConfig.getInitialDelay(), AaaConfig.getRepeatDelay(), TimeUnit.SECONDS);
+        scheduledFuture = ses.scheduleAtFixedRate(authenticationStatisticsPublisher,
+        AaaConfig.getInitialDelay(), AaaConfig.getRepeatDelay(), TimeUnit.SECONDS);
         log.info("Started");
     }
 
     @Deactivate
     public void deactivate() {
-    	log.info("Inside AaaManager.deactivate()");
+        log.info("Inside AaaManager.deactivate()");
         impl.withdrawIntercepts();
         packetService.removeProcessor(processor);
         netCfgService.removeListener(cfgListener);
@@ -250,7 +248,6 @@ public class AaaManager
                     deviceService, subsService, pktCustomizer, this);
         }
     }
-
     private void configurePacketCustomizer() {
         switch (customizer.toLowerCase()) {
             case "sample":
@@ -267,18 +264,16 @@ public class AaaManager
                 break;
         }
     }
-    
     private boolean isValidValidator(RADIUS radiusPacket) {
-    	log.info("radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_MESSAGE_AUTH)---"+radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_MESSAGE_AUTH).getValue());
-		return radiusPacket.checkMessageAuthenticator(AaaManager.this.radiusSecret);
-	}
-    
+        log.info("radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_MESSAGE_AUTH)---" +
+                radiusPacket.getAttribute(RADIUSAttribute.RADIUS_ATTR_MESSAGE_AUTH).getValue());
+        return radiusPacket.checkMessageAuthenticator(AaaManager.this.radiusSecret);
+        }
     public void checkForPacketFromUnknownServer(String hostAddress) {
-		if(!hostAddress.equals(newCfg.radiusIp().getHostAddress())) {
-			aaaStatistics.incrementNumberOfPacketFromUnknownServer();
-		}
-	}
-
+        if (!hostAddress.equals(newCfg.radiusIp().getHostAddress())) {
+            aaaStatistics.incrementNumberOfPacketFromUnknownServer();
+            }
+    }
     /**
      * Send RADIUS packet to the RADIUS server.
      *
@@ -286,10 +281,10 @@ public class AaaManager
      * @param inPkt        Incoming EAPOL packet
      */
     protected void sendRadiusPacket(RADIUS radiusPacket, InboundPacket inPkt) {
-    	outPacketList.add(radiusPacket.getIdentifier());
-    	aaaStatistics.increaseOrDecreasePendingCounter(true);
-    	aaaStatistics.increaseAccessRequestPacketsCounter();
-    	impl.sendRadiusPacket(radiusPacket, inPkt);
+        outPacketList.add(radiusPacket.getIdentifier());
+        aaaStatistics.increaseOrDecreasePendingCounter(true);
+        aaaStatistics.increaseAccessRequestPacketsCounter();
+        impl.sendRadiusPacket(radiusPacket, inPkt);
     }
 
     /**
@@ -314,16 +309,17 @@ public class AaaManager
         EAP eapPayload;
         Ethernet eth;
         boolean isValid = isValidValidator(radiusPacket);
-        if(!isValid) { 
-			log.info("Calling aaaStatisticsManager.increaseInvalidValidatorCounter() from AaaManager.checkForInvalidValidator()");
-			aaaStatistics.increaseInvalidValidatorCounter();
-		}
-        if(outPacketList.contains(radiusPacket.getIdentifier())) {
-        	log.info("Calling aaaStatisticsManager.increaseOrDecreasePendingCounter() from AaaManager.handleRadiusPacket()");
+        if (!isValid) {
+            log.info("Calling aaaStatisticsManager.increaseInvalidValidatorCounter()" +
+                "from AaaManager.checkForInvalidValidator()");
+            aaaStatistics.increaseInvalidValidatorCounter();
+        }
+        if (outPacketList.contains(radiusPacket.getIdentifier())) {
+        	log.info("Calling aaaStatisticsManager.increaseOrDecreasePendingCounter() "
+        			+ "from AaaManager.handleRadiusPacket()");
         	aaaStatistics.increaseOrDecreasePendingCounter(false);
         	outPacketList.remove(new Byte(radiusPacket.getIdentifier()));
         }
-        
         switch (radiusPacket.getCode()) {
             case RADIUS.RADIUS_CODE_ACCESS_CHALLENGE:
                 log.info("RADIUS packet: RADIUS_CODE_ACCESS_CHALLENGE");
